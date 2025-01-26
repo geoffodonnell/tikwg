@@ -46,7 +46,7 @@ $gateway = $configuration.Interface.DNS;
 ## Copy static scripts
 Copy-Item -Path (Join-Path -Path $scriptDirectory -ChildPath "install.rsc") -Destination $stagingDirectory
 Copy-Item -Path (Join-Path -Path $scriptDirectory -ChildPath "uninstall.rsc") -Destination $stagingDirectory
-Copy-Item -Path (Join-Path -Path $scriptDirectory -ChildPath "get-status.rsc") -Destination $stagingDirectory
+Copy-Item -Path (Join-Path -Path $scriptDirectory -ChildPath "status.rsc") -Destination $stagingDirectory
 
 ## Copy configuration file
 @{
