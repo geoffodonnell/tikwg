@@ -1,5 +1,20 @@
 {
-    :local fileName "tikwg/config"
+    :local envName "tikwg-env"
+    :local dirName "tikwg"
+    :local tikwg
+
+    ## Read root configuration file
+    :onerror e in={
+        :set tikwg [:deserialize [/file get [find name=$envName] contents] from=json options=json.no-string-conversion]
+    } do={
+        :error "Failure reading configuration file '$envName'"
+    }
+
+    :if ([:typeof ($tikwg->"directory")] = "str") do={
+        :set name=dirName value=($tikwg->"directory")
+    }
+
+    :local fileName "$dirName/config"
     :local config
 
     ## Read configuration file
@@ -37,9 +52,7 @@
     }
 
     ## Perform ping
-    #:put "Pinging..."
     :local ping [:ping 8.8.8.8 count=4 interface=$ifaceName as-value]
-    #:put "Pinging... Done"
 
     :if ($ping->0->"status" = "timeout" || $ping->1->"status" = "timeout"|| $ping->2->"status" = "timeout" || $ping->3->"status" = "timeout") do={
         [/terminal style error]
@@ -68,5 +81,4 @@
         :put "DNS: FAILED, error: $e"
         [/terminal style none]
     }
-
 }
