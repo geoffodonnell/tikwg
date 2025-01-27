@@ -13,7 +13,7 @@
     :if ([:typeof ($tikwg->"directory")] = "str") do={
         :set name=dirName value=($tikwg->"directory")
     }
-    
+
     :local configFileName "$dirName/config"
     :local installFileName "$dirName/install.json"
     :local config
@@ -26,6 +26,8 @@
     } do={
         :error "Failure reading configuration file: '$e'"
     }
+
+    :put "Installing WireGuard VPN"
 
     :local ifaceName [($config->"interface")]
     :local lanIfaceName [($config->"lanInterface")]
@@ -107,4 +109,11 @@
 
     # Remove the install configuration file so the private key isn't hanging around
     /file remove $installFileName
+
+    # Run the status script
+    :onerror e in={
+        /import "$dirName/status.rsc"
+    } do={
+        :error "Status check failed, please check your configuration."
+    }
 }

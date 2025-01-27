@@ -87,5 +87,5 @@ $peers = $conf["Peer"] | ConvertTo-Array
 
 Write-Output -InputObject @{
     Interface = $conf["Interface"]
-    Peers = $peers
+    Peers = [Array]$peers
 }

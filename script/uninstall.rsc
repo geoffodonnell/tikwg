@@ -27,6 +27,8 @@
         :error "Failure reading configuration file: '$e'"
     }
 
+    :put "Uninstalling WireGuard VPN"
+
     :local ifaceName [($config->"interface")]
     :local lanIfaceName [($config->"lanInterface")]
     :local wanIfaceName [($config->"wanInterface")]
