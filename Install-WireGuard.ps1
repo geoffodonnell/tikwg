@@ -26,11 +26,22 @@ Function Invoke-Ssh {
         [string] $Command
     )
 
-    if ([System.String]::IsNullOrWhiteSpace($User)) {
-        return (ssh $HostName $Command);
-    } else {
-        return (ssh "$User@$HostName" $Command);
+    $exe = "ssh";
+    $arg0 = [System.String]::IsNullOrWhiteSpace($User) ? $HostName : "$User@$HostName";
+    $arg1 = $Command
+
+    Write-Verbose -Message "Executing ssh command `"$Command`""
+
+    $result = & $exe $arg0 $arg1
+    $result = [System.String]::Join("`r`n", $result ?? @());
+
+    Write-Verbose -Message "Executed ssh command `"$Command`""
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error -Message "ssh exited with code '$exitCode': $result"
     }
+
+    return $result
 }
 
 Function Invoke-ScpUpload {
@@ -42,11 +53,22 @@ Function Invoke-ScpUpload {
         [string] $DestinationPath
     )
 
-    if ([System.String]::IsNullOrWhiteSpace($User)) {
-        return (scp $SourcePath "$($HostName):$DestinationPath");
-    } else {
-        return (scp $SourcePath "$($User)@$($HostName):$DestinationPath");
+    $exe = "scp";
+    $arg0 = $SourcePath;
+    $arg1 = [System.String]::IsNullOrWhiteSpace($User) ? "$($HostName):$DestinationPath" : "$($User)@$($HostName):$DestinationPath";
+
+    Write-Verbose -Message "Executing scp command, copy $arg0 tp $arg1"
+
+    $result = & $exe $arg0 $arg1
+    $result = [System.String]::Join("`r`n", $result ?? @());
+
+    Write-Verbose -Message "Executed scp command, copy $arg0 tp $arg1"
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error -Message "scp exited with code '$exitCode': $result"
     }
+
+    return $result
 }
 
 # Main script
@@ -97,23 +119,23 @@ $envFile = New-TemporaryFile
     directory = "$HOST_DIRECTORY"
 } | ConvertTo-Json | Set-Content -Path $envFile
 
-Invoke-ScpUpload -User $User -HostName $HostName -SourcePath $envFile -DestinationPath "/$ENVIRONMENT_FILE_NAME"
+Invoke-ScpUpload -User $User -HostName $HostName -SourcePath $envFile -DestinationPath "/$ENVIRONMENT_FILE_NAME" -ErrorAction Stop | Out-Null
 
 ### Execute preflight script
 $id = [System.Guid]::NewGuid().ToString().Split("-")[4]
 $preflight = Join-Path -Path $scriptDirectory -ChildPath "preflight.rsc"
 
-Invoke-Ssh -User $User -HostName $HostName -Command "/file add type=directory name=$id"
-Invoke-ScpUpload -User $User -HostName $HostName -SourcePath $preflight -DestinationPath "/$id/preflight.rsc"
-Invoke-Ssh -User $User -HostName $HostName -Command "/import $id/preflight.rsc; /file remove `"$id`""
+Invoke-Ssh -User $User -HostName $HostName -Command "/file add type=directory name=$id" -ErrorAction Stop | Out-Null
+Invoke-ScpUpload -User $User -HostName $HostName -SourcePath $preflight -DestinationPath "/$id/preflight.rsc" -ErrorAction Stop | Out-Null
+Invoke-Ssh -User $User -HostName $HostName -Command "/import $id/preflight.rsc; /file remove `"$id`";" -ErrorAction Stop | Out-Null
 
 ### Copy files from staging directory onto device
 Get-ChildItem -Path $stagingDirectory | ForEach-Object {
-    Invoke-ScpUpload -User $User -HostName $HostName -SourcePath "$($_.FullName)" -DestinationPath "/$HOST_DIRECTORY/$($_.Name)"
+    Invoke-ScpUpload -User $User -HostName $HostName -SourcePath "$($_.FullName)" -DestinationPath "/$HOST_DIRECTORY/$($_.Name)" -ErrorAction Stop | Out-Null
 }
 
 ### Execute install script
-#Invoke-Ssh -User $User -HostName $HostName -Command "/import $HOST_DIRECTORY/install.rsc;"
+Invoke-Ssh -User $User -HostName $HostName -Command "/import $HOST_DIRECTORY/install.rsc;" -ErrorAction Stop | Out-Null
 
 ## Cleanup temporary files
 Remove-Item -Path $stagingDirectory -Recurse -Force

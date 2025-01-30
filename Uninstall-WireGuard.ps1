@@ -16,11 +16,22 @@ Function Invoke-Ssh {
         [string] $Command
     )
 
-    if ([System.String]::IsNullOrWhiteSpace($User)) {
-        return (ssh $HostName $Command);
-    } else {
-        return (ssh "$User@$HostName" $Command);
+    $exe = "ssh";
+    $arg0 = [System.String]::IsNullOrWhiteSpace($User) ? $HostName : "$User@$HostName";
+    $arg1 = $Command
+
+    Write-Verbose -Message "Executing ssh command `"$Command`""
+
+    $result = & $exe $arg0 $arg1
+    $result = [System.String]::Join("`r`n", $result ?? @());
+
+    Write-Verbose -Message "Executed ssh command `"$Command`""
+
+    if ($LASTEXITCODE -ne 0) {
+        Write-Error -Message "ssh exited with code '$exitCode': $result"
     }
+
+    return $result
 }
 
 $ENVIRONMENT_FILE_NAME = "tikwg-env"
