@@ -38,7 +38,7 @@ Function Invoke-Ssh {
     Write-Verbose -Message "Executed ssh command, result:`n$result "
 
     if ($LASTEXITCODE -ne 0) {
-        Write-Error -Message "ssh exited with code '$exitCode': $result"
+        Write-Error -Message "ssh exited with code '$LASTEXITCODE': $result"
     }
 
     return $result
@@ -65,7 +65,7 @@ Function Invoke-ScpUpload {
     Write-Verbose -Message "Executed scp command, result:`n$result "
 
     if ($LASTEXITCODE -ne 0) {
-        Write-Error -Message "scp exited with code '$exitCode': $result"
+        Write-Error -Message "scp exited with code '$LASTEXITCODE': $result"
     }
 
     return $result
@@ -86,7 +86,7 @@ if (Test-Path -Path $stagingDirectory -ErrorAction Continue) {
 }
 
 ## Read in configuration file
-$configuration = & $PSScriptRoot\Read-ConfigFile.ps1 -Path $Path
+$configuration = & $PSScriptRoot\lib\Read-ConfigFile.ps1 -Path $Path
 
 ## Save the configuration as JSON for install script
 $configuration | `
