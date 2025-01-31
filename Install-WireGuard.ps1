@@ -35,7 +35,7 @@ Function Invoke-Ssh {
     $result = & $exe $arg0 $arg1
     $result = [System.String]::Join("`r`n", $result ?? @());
 
-    Write-Verbose -Message "Executed ssh command `"$Command`""
+    Write-Verbose -Message "Executed ssh command, result:`n$result "
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error -Message "ssh exited with code '$exitCode': $result"
@@ -62,7 +62,7 @@ Function Invoke-ScpUpload {
     $result = & $exe $arg0 $arg1
     $result = [System.String]::Join("`r`n", $result ?? @());
 
-    Write-Verbose -Message "Executed scp command, copy $arg0 tp $arg1"
+    Write-Verbose -Message "Executed scp command, result:`n$result "
 
     if ($LASTEXITCODE -ne 0) {
         Write-Error -Message "scp exited with code '$exitCode': $result"
