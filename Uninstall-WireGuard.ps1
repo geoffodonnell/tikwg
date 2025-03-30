@@ -41,5 +41,7 @@ $tikwgEnvAsJson = Invoke-Ssh -User $User -HostName $HostName -Command ":put [/fi
 $tikwgEnv = $tikwgEnvAsJson | ConvertFrom-Json
 $hostDirectory = $tikwgEnv.directory;
 
+Write-Verbose -Message "Host directory: $hostDirectory"
+
 ### Execute install script
 Invoke-Ssh -User $User -HostName $HostName -Command "/import $hostDirectory/uninstall.rsc;"

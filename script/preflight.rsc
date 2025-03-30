@@ -49,10 +49,15 @@
     # Execute uninstall.rsc if neccessary
     {
         :onerror errorName in={
-            :if ([/file get [find type="file" name="$dirName/uninstall.rsc"] name] = $dirName) do={            
-                :put "Executing '$dirName/uninstall.rsc'"
-                /import "$dirName/uninstall.rsc"
-                :put "Executed '$dirName/uninstall.rsc'"
+            :if ([/file get [find type="script" name="$dirName/uninstall.rsc"] name] = "$dirName/uninstall.rsc") do={   
+
+                :onerror errorName in={
+                    :put "Executing '$dirName/uninstall.rsc'"
+                    /import "$dirName/uninstall.rsc"
+                    :put "Executed '$dirName/uninstall.rsc'"
+                } do={ 
+                    :put "$errorName"
+                }
             }
         } do={ 
             if ($errorName = "no such item") do={

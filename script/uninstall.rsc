@@ -17,14 +17,23 @@
     :local configFileName "$dirName/config"
     :local oldDnsfileName "$dirName/old-dns"
     :local config
-    :local oldDns
+    :local oldDns ""
+
+    :put "Reading configuration file '$configFileName'"
 
     ## Read configuration file
     :onerror e in={
         :set config [:deserialize [/file get [find name=$configFileName] contents] from=json options=json.no-string-conversion]
+    } do={
+        :error "Failure reading config file: '$e'"
+    }
+
+    :put "Reading configuration file '$oldDnsfileName'"
+
+    :onerror e in={
         :set oldDns [/file get [find name=$oldDnsfileName] contents]
     } do={
-        :error "Failure reading configuration file: '$e'"
+        :put "Non-fatal error reading old-dns file '$oldDnsfileName': $e"
     }
 
     :put "Uninstalling WireGuard VPN"
@@ -72,7 +81,11 @@
     }
 
     # Reset DNS
-    /ip dns set servers="$oldDns"
+    if ([:len $oldDns] > 0) do={
+        /ip dns set servers="$oldDns"
+    } else={
+        /ip dns set servers=""
+    }
 
     # Remove routes
     /ip route remove [find dst-address=128.0.0.0/1]

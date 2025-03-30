@@ -15,6 +15,7 @@
     }
 
     :local configFileName "$dirName/config"
+    :local oldDnsfileName "$dirName/old-dns"
     :local installFileName "$dirName/install.json"
     :local config
     :local install
@@ -39,7 +40,7 @@
     :local ipAddress
     
     :local len [:find ($install->"Interface"->"Address") "/"]
-    :set ipAddress [:pick ($install->"Interface"->"DNS") 0 $len]
+    :set ipAddress [:pick ($install->"Interface"->"Address") 0 $len]
     :set ipAddress "$ipAddress/30"
 
     # Sanity check - ensure the interface isn't already configured
@@ -63,7 +64,7 @@
     /interface wireguard add listen-port=13231 mtu=1420 name="$ifaceName" private-key="$privateKey"
 
     # Add IP Address to interface
-    /ip address add address=$ipAddress interface="$ifaceName" network=$network
+    /ip address add address=$ipAddress interface="$ifaceName"
 
     # Configure peer(s)
     :foreach record in=($install->"Peers") do={
@@ -72,9 +73,9 @@
         :local allowedIPs ($record->"AllowedIPs")
 
         :local idx [:find $endpoint ":"]
-        :local len [:find $endpoint]
-        :local ip [:pick $endpoint 0 idx]
-        :local port [:pick $endpoint (idx + 1) $len]
+        :local len [:len $endpoint]
+        :local ip [:pick $endpoint 0 $idx]
+        :local port [:pick $endpoint ($idx + 1) $len]
 
         # Add peer
         /interface wireguard peers add allowed-address=$allowedIPs endpoint-address=$ip endpoint-port=$port interface="$ifaceName" persistent-keepalive=25s comment="ProtonVPN" public-key=$publicKey
@@ -90,6 +91,9 @@
     /ip route add disabled=no distance=1 dst-address=0.0.0.0/1 gateway=$gateway pref-src="" routing-table=main scope=30 suppress-hw-offload=no target-scope=10
     /ip route add disabled=no distance=1 dst-address=128.0.0.0/1 gateway=$gateway pref-src="" routing-table=main scope=30 suppress-hw-offload=no target-scope=10
     
+    # Store the existing DNS server
+    /file add type=file name=$oldDnsfileName contents=[/ip dns get servers] 
+
     # Set DNS
     /ip dns set servers=$gateway
     
